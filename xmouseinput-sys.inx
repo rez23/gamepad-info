@@ -1,0 +1,87 @@
+; (c) Spartaco Amadei
+; Creator: Spartaco Amadei
+; Maintainer: Spartaco Amadei
+; SPDX-License-Identifier: MIT
+; xmouseinput_sys.inf
+
+; ==== Version Section ====
+
+[Version]
+Signature                              = "$Windows NT$"
+Class                                  = HIDClass
+ClassGUID                              = {745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+Provider                               = %ManufacturerName%
+CatalogFile                            = xmouseinput_sys.cat
+PnpLockdown                            = 1
+DriverVer                              =
+
+; ==== SourceDisksNames Section ====
+
+[SourceDisksNames]
+1                                      = %DiskName%,,,""
+
+; ==== SourceDisksFiles Section ====
+
+[SourceDisksFiles]
+xmouseinput_sys.sys                    = 1,,
+
+; ==== DestinationDirs Section ====
+
+[DestinationDirs]
+xmouseinput_sys_Device_CopyFiles       = 13
+
+; ==== Manufacturer Section ====
+
+[Manufacturer]
+%ManufacturerName%                     = Standard,NT$ARCH$.10.0...16299
+
+; ==== Models Section ====
+
+[Standard.NT$ARCH$.10.0...16299]
+%xmouseinput_sysDeviceName%            = xmouseinput_sys_Device, HID\VID_045E&PID_028E&IG_00
+; ==== DDInstall Section ====
+
+[xmouseinput_sys_Device]
+CopyFiles                              = xmouseinput_sys_Device_CopyFiles
+
+[xmouseinput_sys_Device_CopyFiles]
+xmouseinput_sys.sys,,,0x00002000 ; COPYFLG_NOSKIP
+
+
+[xmouseinput_sys_Device.Filters$ARCH$.10.0...16299]
+AddFilter                              = xmouseinput_sys, 0x00000008, xmouseinput_sys_Filter_Metadata ; FLG_ADDREG_APPEND
+
+[xmouseinput_sys_Filter_Metadata]
+FilterPosition                         = Lower
+
+
+; ==== DDInstall.Services Section ====
+
+[xmouseinput_sys_Device.Services]
+AddService                             = xmouseinput_sys,%SPSVCINST_ASSOCSERVICE%,xmouseinput_sys_Device_Service_AddService
+
+[xmouseinput_sys_Device_Service_AddService]
+DisplayName                            = %xmouseinput_sysServiceDisplayName%
+ServiceType                            = 1 ; SERVICE_KERNEL_DRIVER
+StartType                              = 3 ; SERVICE_DEMAND_START
+ErrorControl                           = 1 ; SERVICE_ERROR_NORMAL
+ServiceBinary                          = %13%\xmouseinput_sys.sys
+
+; ==== DDInstall.Wdf Section ====
+
+[xmouseinput_sys_Device.Wdf]
+KmdfService                            = xmouseinput_sys,xmouseinput_sys_Device_Wdf_KmdfService
+
+[xmouseinput_sys_Device_Wdf_KmdfService]
+KmdfLibraryVersion                     = $KMDFVERSION$
+
+; ==== Strings Section ====
+
+[Strings]
+ManufacturerName                       = "Spartaco Amadei"
+DiskName                               = "xmouseinput_sys Installation Disk"
+xmouseinput_sysDeviceName              = "xmouseinput_sys Device"
+xmouseinput_sysServiceDisplayName      = "xmouseinput_sys Service"
+
+; Service Installation Flags
+SPSVCINST_ASSOCSERVICE                 = 0x00000002
