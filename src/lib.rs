@@ -13,26 +13,24 @@ extern crate alloc;
 
 mod device;
 
-use swdk::builders::{
+use swdk::bd::{
     WdfDriverConf, WdfDriverSetup, WdfObjAttrs,
 };
-use swdk::context::WdfCtxNoneDesc;
-use swdk::handle::Handle;
+use swdk::ctx::WdfCtxNoneDesc;
+use swdk::Handle;
 use swdk::ioctl::{IoCtlRequest, IoCtlResponse};
-use swdk::operators::{AsWdfOwned, AsWdfOwner};
+use swdk::op::{AsWdfOwned, AsWdfOwner};
 use swdk::rt::wdk_sys::{
     HID_COLLECTION_INFORMATION, NTSTATUS, PCUNICODE_STRING,
     PDRIVER_OBJECT, PWDFDEVICE_INIT, STATUS_SUCCESS,
     STATUS_UNSUCCESSFUL, WDFDEVICE, WDFDRIVER, WDFIOTARGET,
 };
-use swdk::values::WdfIoTargetError::IoCtlTargetSendError;
+use swdk::val::WdfIoTargetError::IoCtlTargetSendError;
 use swdk::{
     debug, error, if_nterror_return_ntstatus, info, ioctl,
 };
-
 #[cfg(not(test))]
-use swdk::rt::WdkAllocator;
-
+use swdk::rt::wdk_alloc::WdkAllocator;
 use crate::device::DeviceData;
 use crate::device::models::GamepadModels;
 
