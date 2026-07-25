@@ -15,8 +15,7 @@ crate-type = ["cdylib"]
 wdk-build = "0.5.1"
 
 [dependencies]
-wdk-sys = { git = "https://github.com/microsoft/windows-drivers-rs.git", branch = "main" }
-swdk = {path = "../../swdk" }
+swdk = {path = "../../swdk", features = ["kmdf-runtime", "hid"] }
 swdk-macros = {path = "../../swdk-macros" }
 
 [features]

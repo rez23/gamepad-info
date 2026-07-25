@@ -17,7 +17,7 @@ use swdk::bd::{
     WdfDriverConf, WdfDriverSetup, WdfObjAttrs,
 };
 use swdk::ctx::WdfCtxNoneDesc;
-use swdk::Handle;
+use swdk::{if_nterror_return_ntstatus, Handle};
 use swdk::ioctl::{IoCtlRequest, IoCtlResponse};
 use swdk::op::{AsWdfOwned, AsWdfOwner};
 use swdk::rt::wdk_sys::{
@@ -25,9 +25,9 @@ use swdk::rt::wdk_sys::{
     PDRIVER_OBJECT, PWDFDEVICE_INIT, STATUS_SUCCESS,
     STATUS_UNSUCCESSFUL, WDFDEVICE, WDFDRIVER, WDFIOTARGET,
 };
-use swdk::val::WdfIoTargetError::IoCtlTargetSendError;
+use swdk::vals::WdfIoTargetError::IoCtlTargetSendError;
 use swdk::{
-    debug, error, if_nterror_return_ntstatus, info, ioctl,
+    debug, error, info, ioctl,
 };
 #[cfg(not(test))]
 use swdk::rt::wdk_alloc::WdkAllocator;
@@ -101,9 +101,9 @@ unsafe extern "C" fn on_driver_device_add(
 
     // get device capabilities
     let device_info: IoCtlResponse<HID_COLLECTION_INFORMATION> = if_nterror_return_ntstatus!(
-        iot_handler.send_ioctl(IoCtlRequest::with_command(
-        ioctl::commands::IOCTL_HID_GET_COLLECTION_INFORMATION,
-    )).map_err(|err| {
+        iot_handler.send_ioctl_sync(IoCtlRequest::with_command(
+            ioctl::commands::IOCTL_HID_GET_COLLECTION_INFORMATION,
+        )).map_err(|err| {
             match err {
                 IoCtlTargetSendError(status) => {
                     error!(
