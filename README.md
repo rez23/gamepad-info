@@ -1,3 +1,3 @@
-# Device Enumerator Example
+# xmouseinput-sys
 
-This example demonstrates how to use the `DeviceEnumerator` class to enumerate devices and retrieve information about them.
+This is both the dimostration of [swdk](https://github.com/sony/swdk) capability and the hid filter driver for my app [xmouseinput](https://github.com/sony/xmouseinput)
