@@ -17,9 +17,10 @@ use swdk::bd::{
     WdfDriverConf, WdfDriverSetup, WdfObjAttrs,
 };
 use swdk::ctx::WdfCtxNoneDesc;
-use swdk::{if_nterror_return_ntstatus, Handle};
 use swdk::ioctl::{IoCtlRequest, IoCtlResponse};
 use swdk::op::{AsWdfOwned, AsWdfOwner};
+#[cfg(not(test))]
+use swdk::rt::wdk_alloc::WdkAllocator;
 use swdk::rt::wdk_sys::{
     HID_COLLECTION_INFORMATION, NTSTATUS, PCUNICODE_STRING,
     PDRIVER_OBJECT, PWDFDEVICE_INIT, STATUS_SUCCESS,
@@ -27,10 +28,10 @@ use swdk::rt::wdk_sys::{
 };
 use swdk::vals::WdfIoTargetError::IoCtlTargetSendError;
 use swdk::{
-    debug, error, info, ioctl,
+    Handle, debug, error, if_nterror_return_ntstatus, info,
+    ioctl,
 };
-#[cfg(not(test))]
-use swdk::rt::wdk_alloc::WdkAllocator;
+use swdk::rt::logging::ntstatus_name;
 use crate::device::DeviceData;
 use crate::device::models::GamepadModels;
 
@@ -106,15 +107,20 @@ unsafe extern "C" fn on_driver_device_add(
         )).map_err(|err| {
             match err {
                 IoCtlTargetSendError(status) => {
+                    let command = status.command;
+                    let error_name = ntstatus_name(status.ntstatus);
+                    let ntstatus = status.ntstatus;
+
                     error!(
                         "'WdfIoTargetSendIoctlSynchronously' \
                         failed for command \
-                        '0x{:08X} with status 0x{:08X}",
-                        status.command,
-                        status.ntstatus,
+                        '0x{:08X} with {} status (0x{:08X})",
+                        command,
+                        error_name,
+                        ntstatus,
                     );
-                    debug!("IOCTL sent request: {:?}", status.request);
-                    status.ntstatus
+
+                    STATUS_UNSUCCESSFUL
                 },
                 err => {
                     error!("Failed to get device capabilities from IOCTL: {:?}", err);
@@ -130,6 +136,5 @@ unsafe extern "C" fn on_driver_device_add(
     );
 
     info!("Device capabilities: {}", gamepad_model);
-
     STATUS_SUCCESS
 }

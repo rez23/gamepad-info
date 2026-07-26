@@ -1,4 +1,5 @@
 use alloc::vec::Vec;
+use swdk::rt::wdk_sys;
 use swdk_macros::CtxDescriptor;
 use crate::device::models::GamepadModels;
 
