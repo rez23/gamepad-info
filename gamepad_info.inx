@@ -1,0 +1,87 @@
+; (c) Spartaco Amadei
+; Creator: Spartaco Amadei
+; Maintainer: Spartaco Amadei
+; SPDX-License-Identifier: MIT
+; gamepad_info.inf
+
+; ==== Version Section ====
+
+[Version]
+Signature                              = "$Windows NT$"
+Class                                  = HIDClass
+ClassGUID                              = {745a17a0-74d3-11d0-b6fe-00a0c90f57da}
+Provider                               = %ManufacturerName%
+CatalogFile                            = gamepad_info.cat
+PnpLockdown                            = 1
+DriverVer                              =
+
+; ==== SourceDisksNames Section ====
+
+[SourceDisksNames]
+1                                      = %DiskName%,,,""
+
+; ==== SourceDisksFiles Section ====
+
+[SourceDisksFiles]
+gamepad_info.sys                    = 1,,
+
+; ==== DestinationDirs Section ====
+
+[DestinationDirs]
+gamepad_info_Device_CopyFiles       = 13
+
+; ==== Manufacturer Section ====
+
+[Manufacturer]
+%ManufacturerName%                     = Standard,NT$ARCH$.10.0...16299
+
+; ==== Models Section ====
+
+[Standard.NT$ARCH$.10.0...16299]
+%gamepad_infoDeviceName%            = gamepad_info_Device, HID\VID_045E&PID_028E&IG_00
+; ==== DDInstall Section ====
+
+[gamepad_info_Device]
+CopyFiles                              = gamepad_info_Device_CopyFiles
+
+[gamepad_info_Device_CopyFiles]
+gamepad_info.sys,,,0x00002000 ; COPYFLG_NOSKIP
+
+
+[gamepad_info_Device.Filters$ARCH$.10.0...16299]
+AddFilter                              = gamepad_info, 0x00000008, gamepad_info_Filter_Metadata ; FLG_ADDREG_APPEND
+
+[gamepad_info_Filter_Metadata]
+FilterPosition                         = Lower
+
+
+; ==== DDInstall.Services Section ====
+
+[gamepad_info_Device.Services]
+AddService                             = gamepad_info,%SPSVCINST_ASSOCSERVICE%,gamepad_info_Device_Service_AddService
+
+[gamepad_info_Device_Service_AddService]
+DisplayName                            = %gamepad_infoServiceDisplayName%
+ServiceType                            = 1 ; SERVICE_KERNEL_DRIVER
+StartType                              = 3 ; SERVICE_DEMAND_START
+ErrorControl                           = 1 ; SERVICE_ERROR_NORMAL
+ServiceBinary                          = %13%\gamepad_info.sys
+
+; ==== DDInstall.Wdf Section ====
+
+[gamepad_info_Device.Wdf]
+KmdfService                            = gamepad_info,gamepad_info_Device_Wdf_KmdfService
+
+[gamepad_info_Device_Wdf_KmdfService]
+KmdfLibraryVersion                     = $KMDFVERSION$
+
+; ==== Strings Section ====
+
+[Strings]
+ManufacturerName                       = "Spartaco Amadei"
+DiskName                               = "gamepad_info Installation Disk"
+gamepad_infoDeviceName              = "gamepad_info Device"
+gamepad_infoServiceDisplayName      = "gamepad_info Service"
+
+; Service Installation Flags
+SPSVCINST_ASSOCSERVICE                 = 0x00000002
