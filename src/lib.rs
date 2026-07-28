@@ -13,24 +13,32 @@ extern crate alloc;
 
 mod device;
 
+use core::ops::Deref;
+
 use swdk::bd::{
-    WdfDriverConf, WdfDriverSetup, WdfObjAttrs,
+    WdfDevicePnpPowerSetup, WdfDriverConf, WdfDriverSetup,
+    WdfObjAttrs,
 };
 use swdk::ctx::WdfCtxNoneDesc;
+use swdk::ioctl::commands::IOCTL_HID_GET_COLLECTION_INFORMATION;
 use swdk::ioctl::{IoCtlRequest, IoCtlResponse};
-use swdk::op::{AsNtStatus, AsWdfOwned, AsWdfOwner};
+use swdk::op::{
+    AsNtStatus, AsRaw, AsWdfOwned, AsWdfOwner, IntoInner,
+    IntoRaw,
+};
 #[cfg(not(test))]
 use swdk::rt::wdk_alloc::WdkAllocator;
 use swdk::rt::wdk_sys::{
     HID_COLLECTION_INFORMATION, HID_DEVICE_ATTRIBUTES,
     NTSTATUS, PCUNICODE_STRING, PDRIVER_OBJECT,
     PWDFDEVICE_INIT, STATUS_SUCCESS, STATUS_UNSUCCESSFUL,
-    WDFDEVICE, WDFDRIVER, WDFIOTARGET,
+    WDF_POWER_DEVICE_STATE, WDFDEVICE, WDFDRIVER,
+    WDFIOTARGET,
 };
 use swdk::vals::WdfIoTargetError::IoCtlTargetSendError;
 use swdk::{
-    Handle, debug, error, if_nterror_return_ntstatus, info,
-    ioctl,
+    Handle, HandleRef, debug, error,
+    if_nterror_return_ntstatus, info, ioctl,
 };
 
 use crate::device::DeviceData;
@@ -89,12 +97,30 @@ unsafe extern "C" fn on_driver_device_add(
     device_init: PWDFDEVICE_INIT,
 ) -> NTSTATUS {
     debug!("Entering in function on_driver_device_add");
-    let device_handle = if_nterror_return_ntstatus!(
+    if_nterror_return_ntstatus!(
         Handle::<WDFDEVICE>::from_owned(
-            device_init,
+            Handle::new(&device_init)
+                .with_filter()
+                .with_pnp_setup(WdfDevicePnpPowerSetup {
+                    on_device_d0_entry: Some(
+                        on_device_d0_entry
+                    ),
+                    ..WdfDevicePnpPowerSetup::default()
+                })
+                .raw(),
             Some(WdfObjAttrs::<DeviceData>::default())
         )
     );
+    STATUS_SUCCESS
+}
+
+unsafe extern "C" fn on_device_d0_entry(
+    device: WDFDEVICE,
+    previous_state: WDF_POWER_DEVICE_STATE,
+) -> NTSTATUS {
+    debug!("D0Entry");
+
+    let device_handle = Handle::<WDFDEVICE>::new(device);
 
     debug!("Getting device capabilities");
     let iot_handler = if_nterror_return_ntstatus!(
@@ -102,14 +128,14 @@ unsafe extern "C" fn on_driver_device_add(
     );
 
     // get device capabilities
-    let device_info: IoCtlResponse<HID_DEVICE_ATTRIBUTES> = if_nterror_return_ntstatus!(
+    let device_info: IoCtlResponse<HID_COLLECTION_INFORMATION> = if_nterror_return_ntstatus!(
         iot_handler.send_ioctl_sync(IoCtlRequest::with_command(
-            0x000B0027
+            IOCTL_HID_GET_COLLECTION_INFORMATION
         )).map_err(|err| {
             match err {
                 IoCtlTargetSendError(status) => {
                     let command = status.command;
-                    let error_name = status.ntstatus.fmt_status();
+                    let status_name = status.ntstatus.fmt_status();
                     let hex = status.ntstatus.fmt_hex();
 
                     error!(
@@ -117,7 +143,7 @@ unsafe extern "C" fn on_driver_device_add(
                         failed for command \
                         '0x{:08X} with {} status ({})",
                         command,
-                        error_name,
+                        status_name,
                         hex,
                     );
 
