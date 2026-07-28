@@ -18,20 +18,21 @@ use swdk::bd::{
 };
 use swdk::ctx::WdfCtxNoneDesc;
 use swdk::ioctl::{IoCtlRequest, IoCtlResponse};
-use swdk::op::{AsWdfOwned, AsWdfOwner};
+use swdk::op::{AsNtStatus, AsWdfOwned, AsWdfOwner};
 #[cfg(not(test))]
 use swdk::rt::wdk_alloc::WdkAllocator;
 use swdk::rt::wdk_sys::{
-    HID_COLLECTION_INFORMATION, NTSTATUS, PCUNICODE_STRING,
-    PDRIVER_OBJECT, PWDFDEVICE_INIT, STATUS_SUCCESS,
-    STATUS_UNSUCCESSFUL, WDFDEVICE, WDFDRIVER, WDFIOTARGET,
+    HID_COLLECTION_INFORMATION, HID_DEVICE_ATTRIBUTES,
+    NTSTATUS, PCUNICODE_STRING, PDRIVER_OBJECT,
+    PWDFDEVICE_INIT, STATUS_SUCCESS, STATUS_UNSUCCESSFUL,
+    WDFDEVICE, WDFDRIVER, WDFIOTARGET,
 };
 use swdk::vals::WdfIoTargetError::IoCtlTargetSendError;
 use swdk::{
     Handle, debug, error, if_nterror_return_ntstatus, info,
     ioctl,
 };
-use swdk::rt::logging::ntstatus_name;
+
 use crate::device::DeviceData;
 use crate::device::models::GamepadModels;
 
@@ -101,23 +102,23 @@ unsafe extern "C" fn on_driver_device_add(
     );
 
     // get device capabilities
-    let device_info: IoCtlResponse<HID_COLLECTION_INFORMATION> = if_nterror_return_ntstatus!(
+    let device_info: IoCtlResponse<HID_DEVICE_ATTRIBUTES> = if_nterror_return_ntstatus!(
         iot_handler.send_ioctl_sync(IoCtlRequest::with_command(
-            ioctl::commands::IOCTL_HID_GET_COLLECTION_INFORMATION,
+            0x000B0027
         )).map_err(|err| {
             match err {
                 IoCtlTargetSendError(status) => {
                     let command = status.command;
-                    let error_name = ntstatus_name(status.ntstatus);
-                    let ntstatus = status.ntstatus;
+                    let error_name = status.ntstatus.fmt_status();
+                    let hex = status.ntstatus.fmt_hex();
 
                     error!(
                         "'WdfIoTargetSendIoctlSynchronously' \
                         failed for command \
-                        '0x{:08X} with {} status (0x{:08X})",
+                        '0x{:08X} with {} status ({})",
                         command,
                         error_name,
-                        ntstatus,
+                        hex,
                     );
 
                     STATUS_UNSUCCESSFUL
@@ -129,6 +130,13 @@ unsafe extern "C" fn on_driver_device_add(
             }
         }
     ));
+
+    debug!(
+        "VID={:04X} PID={:04X} VER={:04X}",
+        device_info.VendorID,
+        device_info.ProductID,
+        device_info.VersionNumber,
+    );
 
     let gamepad_model = GamepadModels::from_vid_and_pid(
         device_info.ProductID,
