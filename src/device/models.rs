@@ -63,12 +63,12 @@ impl core::fmt::Display for HidDeviceUsageResponse {
 impl HidDeviceUsageResponse {
     pub fn from_u16(u: u16) -> Option<Self> {
         match u {
-            0x01 => Some(Self::Gamepad),
-            0x02 => Some(Self::Joystick),
+            0x01 => Some(Self::Pointer),
+            0x02 => Some(Self::Mouse),
+            0x04 => Some(Self::Joystick),
+            0x05 => Some(Self::Gamepad),
             0x06 => Some(Self::Keyboard),
-            0x04 => Some(Self::Pointer),
-            0x05 => Some(Self::MultiaxisController),
-            0x03 => Some(Self::Mouse),
+            0x07 => Some(Self::MultiaxisController),
             _ => None,
         }
     }

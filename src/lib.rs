@@ -165,8 +165,8 @@ unsafe extern "C" fn on_device_d0_entry(
     );
 
     let gamepad_model = GamepadModels::from_vid_and_pid(
-        device_info.ProductID,
         device_info.VendorID,
+        device_info.ProductID,
     );
 
     info!("Device capabilities: {}", gamepad_model);
