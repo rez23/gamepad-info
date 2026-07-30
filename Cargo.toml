@@ -15,11 +15,12 @@ crate-type = ["cdylib"]
 wdk-build = "0.5.1"
 
 [dependencies]
-swdk = {path = "../../swdk", features = ["kmdf-runtime", "hid"] }
+swdk = {path = "../../swdk" }
 swdk-macros = {path = "../../swdk-macros" }
 
 [features]
-default = ["swdk/hid", "swdk/kmdf-runtime"]
+wdk = ["swdk/hid", "swdk/kmdf-runtime"]
+test = ["swdk/test-runtime"]
 
 [profile.dev]
 panic = "abort"

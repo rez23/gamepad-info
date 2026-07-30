@@ -67,7 +67,7 @@ pub unsafe extern "system" fn driver_entry(
 ) -> NTSTATUS {
     debug!("DriverEntry launched from WDF");
     if_nterror_return_ntstatus!(
-        Handle::<WDFDRIVER>::from_owned_with_attrs(
+        Handle::<WDFDRIVER>::allocate(
             driver_obj,
             WdfDriverConf {
                 setup: WdfDriverSetup {
